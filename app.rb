@@ -4,7 +4,7 @@ require_relative "models"
 require_relative "services"
 require_relative "utils"
 
-set :port, 4567
+set :port, (ENV["PORT"] || 4567).to_i
 set :bind, "0.0.0.0"
 set :show_exceptions, false
 
