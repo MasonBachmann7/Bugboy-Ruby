@@ -7,6 +7,7 @@ require_relative "utils"
 set :port, (ENV["PORT"] || 4567).to_i
 set :bind, "0.0.0.0"
 set :show_exceptions, false
+set :host_authorization, { permitted_hosts: [".onrender.com"] }
 
 BUGS = [
   { id: 1,  route: "/trigger/type-error",           method: "GET",  error: "TypeError",                        description: "String concatenation with nil last_name in User#get_display_name" },
