@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bugboy Ruby — Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f0f0f; color: #e0e0e0; padding: 2rem; }
+    h1 { font-size: 1.8rem; margin-bottom: 0.25rem; color: #ff6b6b; }
+    .subtitle { color: #888; margin-bottom: 2rem; font-size: 0.95rem; }
+    .controls { margin-bottom: 1.5rem; display: flex; gap: 0.75rem; align-items: center; }
+    .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-trigger { background: #e74c3c; color: #fff; }
+    .btn-all { background: #9b59b6; color: #fff; }
+    .btn-clear { background: #333; color: #ccc; }
+    .stats { color: #888; font-size: 0.85rem; }
+    .stats .ok { color: #2ecc71; }
+    .stats .fail { color: #e74c3c; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    th { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 2px solid #222; color: #999; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #1a1a1a; font-size: 0.9rem; }
+    tr:hover { background: #1a1a1a; }
+    .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; font-family: monospace; }
+    .badge-get { background: #1a3a2a; color: #2ecc71; }
+    .badge-post { background: #3a2a1a; color: #f39c12; }
+    .error-type { color: #ff6b6b; font-family: monospace; font-size: 0.85rem; }
+    .route { font-family: monospace; color: #74b9ff; font-size: 0.85rem; }
+    .result { font-family: monospace; font-size: 0.8rem; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .result.error { color: #e74c3c; }
+    .result.pending { color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Bugboy Ruby</h1>
+  <p class="subtitle">Test web app with 15 intentional runtime errors — built for BugStack testing</p>
+
+  <div class="controls">
+    <button class="btn btn-all" onclick="triggerAll()">Trigger All Bugs</button>
+    <button class="btn btn-clear" onclick="clearResults()">Clear Results</button>
+    <span class="stats">
+      Triggered: <span id="total">0</span> |
+      <span class="fail">Errors: <span id="errors">0</span></span> |
+      <span class="ok">Success: <span id="success">0</span></span>
+    </span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Method</th>
+        <th>Route</th>
+        <th>Error Type</th>
+        <th>Description</th>
+        <th>Action</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody id="bug-table">
+    </tbody>
+  </table>
+
+  <script>
+    const bugs = <%= BUGS.to_json %>;
+    let stats = { total: 0, errors: 0, success: 0 };
+
+    function renderTable() {
+      const tbody = document.getElementById("bug-table");
+      tbody.innerHTML = bugs.map(b => `
+        <tr id="row-${b.id}">
+          <td>${b.id}</td>
+          <td><span class="badge badge-${b.method.toLowerCase()}">${b.method}</span></td>
+          <td class="route">${b.route}</td>
+          <td class="error-type">${b.error}</td>
+          <td>${b.description}</td>
+          <td><button class="btn btn-trigger" onclick="triggerBug(${b.id})">Trigger</button></td>
+          <td class="result pending" id="result-${b.id}">—</td>
+        </tr>
+      `).join("");
+    }
+
+    async function triggerBug(id) {
+      const bug = bugs.find(b => b.id === id);
+      const el = document.getElementById(`result-${id}`);
+      el.textContent = "⏳ ...";
+      el.className = "result pending";
+
+      try {
+        const opts = bug.method === "POST" ? { method: "POST" } : {};
+        const res = await fetch(bug.route, opts);
+        const data = await res.json();
+
+        stats.total++;
+        if (data.error) {
+          stats.errors++;
+          el.textContent = `${data.error}: ${data.message}`;
+          el.className = "result error";
+        } else {
+          stats.success++;
+          el.textContent = "✓ OK (no error raised)";
+          el.className = "result";
+          el.style.color = "#2ecc71";
+        }
+      } catch (e) {
+        stats.total++;
+        stats.errors++;
+        el.textContent = `Network: ${e.message}`;
+        el.className = "result error";
+      }
+
+      updateStats();
+    }
+
+    async function triggerAll() {
+      for (const bug of bugs) {
+        await triggerBug(bug.id);
+        await new Promise(r => setTimeout(r, 300));
+      }
+    }
+
+    function clearResults() {
+      stats = { total: 0, errors: 0, success: 0 };
+      updateStats();
+      bugs.forEach(b => {
+        const el = document.getElementById(`result-${b.id}`);
+        el.textContent = "—";
+        el.className = "result pending";
+      });
+    }
+
+    function updateStats() {
+      document.getElementById("total").textContent = stats.total;
+      document.getElementById("errors").textContent = stats.errors;
+      document.getElementById("success").textContent = stats.success;
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
