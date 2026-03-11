@@ -3,6 +3,14 @@ require "json"
 require_relative "models"
 require_relative "services"
 require_relative "utils"
+require "bugstack"
+
+# BugStack error monitoring
+Bugstack.init(
+  api_key: ENV["BUGSTACK_API_KEY"],
+  endpoint: ENV["BUGSTACK_ENDPOINT"] || "https://bugstack-error-service.onrender.com/api/capture",
+  auto_fix: true
+)
 
 set :port, (ENV["PORT"] || 4567).to_i
 set :bind, "0.0.0.0"
