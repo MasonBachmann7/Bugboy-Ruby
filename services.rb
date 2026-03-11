@@ -93,8 +93,8 @@ module Services
         status: "open",
         priority: Integer(row["priority"])
       )
-  end
     end
+  end
 
   # Bug #12: Errno::EACCES — writing to a read-only file
   def self.write_export_file
@@ -119,8 +119,8 @@ module Services
       # Simulate a slow database aggregation that takes 10 seconds
       sleep(10)
       { result: "aggregated_data" }
-  end
     end
+  end
 
   # Bug #14: RuntimeError from background thread — notification handler crashes
   def self.fire_background_notification
@@ -141,9 +141,9 @@ module Services
         thread.value
       rescue => e
         raise e
-  end
-    end
       end
+    end
+  end
 
   # Bug #15: NoMemoryError — building an O(n^2) in-memory cross-reference index
   def self.process_bulk_import(count)
@@ -154,8 +154,8 @@ module Services
     cross_ref = {}
     records.each do |r|
       cross_ref[r[:id]] = records.map { |other| other[:data] }
-  end
+    end
 
     cross_ref.size
+  end
 end
-    end
