@@ -9,7 +9,8 @@ require "bugstack"
 Bugstack.init(
   api_key: ENV["BUGSTACK_API_KEY"],
   endpoint: ENV["BUGSTACK_ENDPOINT"] || "https://bugstack-error-service.onrender.com/api/capture",
-  auto_fix: true
+  auto_fix: true,
+  debug: true
 )
 
 set :port, (ENV["PORT"] || 4567).to_i
