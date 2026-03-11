@@ -168,6 +168,7 @@ end
 
 error Exception do
   e = env["sinatra.error"]
+  Bugstack.capture_exception(e, request: { route: request.path_info, method: request.request_method })
   content_type :json
   status 500
   Utils.format_error_response(e).to_json
