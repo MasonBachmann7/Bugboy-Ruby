@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: bundle install
+
+      - name: Check syntax
+        run: ruby -c app.rb models.rb services.rb utils.rb
+
+      - name: Boot test
+        run: |
+          ruby -e "
+            require 'rack'
+            require 'rack/test'
+            require_relative 'app'
+            puts 'App loaded successfully'
+          "
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t bugboy-ruby .
+
+      - name: Test container starts
+        run: |
+          docker run -d --name test-app -p 4567:4567 bugboy-ruby
+          sleep 3
+          curl -f http://localhost:4567/health || (docker logs test-app && exit 1)
+          docker stop test-app
