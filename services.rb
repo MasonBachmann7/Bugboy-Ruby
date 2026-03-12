@@ -23,6 +23,8 @@ module Services
     total_points = project.tasks.sum { |t| t.priority }
     sprint_length = project.settings["sprint_length_days"]
 
+    return { project: project.name, velocity: 0, total_points: total_points } if sprint_length.to_i == 0
+
     velocity = total_points / sprint_length
     { project: project.name, velocity: velocity, total_points: total_points }
   end
