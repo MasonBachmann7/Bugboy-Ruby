@@ -7,3 +7,4 @@ gem "json", "~> 2.7"
 group :test do
   gem "rack-test", "~> 2.1"
 end
+gem 'bugstack', '~> 1.0'
