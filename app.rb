@@ -1,19 +1,8 @@
-require "bundler/setup"
 require "sinatra"
 require "json"
 require_relative "models"
 require_relative "services"
 require_relative "utils"
-require "bugstack"
-
-# BugStack error monitoring
-Bugstack.init(
-  api_key: ENV["BUGSTACK_API_KEY"],
-  endpoint: ENV["BUGSTACK_ENDPOINT"] || "https://bugstack-error-service.onrender.com/api/capture",
-  auto_fix: true,
-  debug: true,
-  timeout: 30
-)
 
 set :port, (ENV["PORT"] || 4567).to_i
 set :bind, "0.0.0.0"
@@ -171,7 +160,6 @@ end
 
 error Exception do
   e = env["sinatra.error"]
-  Bugstack.capture_exception(e, request: { route: request.path_info, method: request.request_method })
   content_type :json
   status 500
   Utils.format_error_response(e).to_json
